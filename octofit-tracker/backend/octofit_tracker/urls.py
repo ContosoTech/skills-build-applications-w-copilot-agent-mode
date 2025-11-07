@@ -23,12 +23,14 @@ from rest_framework.renderers import BrowsableAPIRenderer
 import os
 
 
-# Patch BrowsableAPIRenderer to use codespace URL if available
+
+# Patch BrowsableAPIRenderer to use codespace URL if available for API docs
 class PatchedBrowsableAPIRenderer(BrowsableAPIRenderer):
     def get_default_renderer_context(self):
         context = super().get_default_renderer_context()
         codespace_name = os.environ.get('CODESPACE_NAME')
         if codespace_name:
+            # Set the host and scheme for the API docs UI
             context['request'].META['HTTP_HOST'] = f"{codespace_name}-8000.app.github.dev"
             context['request'].scheme = 'https'
         return context
@@ -37,6 +39,14 @@ if BrowsableAPIRenderer in api_settings.DEFAULT_RENDERER_CLASSES:
     idx = api_settings.DEFAULT_RENDERER_CLASSES.index(BrowsableAPIRenderer)
     api_settings.DEFAULT_RENDERER_CLASSES = list(api_settings.DEFAULT_RENDERER_CLASSES)
     api_settings.DEFAULT_RENDERER_CLASSES[idx] = PatchedBrowsableAPIRenderer
+
+# Setup router for REST API endpoints
+router = DefaultRouter()
+router.register(r'users', UserViewSet, basename='user')
+router.register(r'teams', TeamViewSet, basename='team')
+router.register(r'activities', ActivityViewSet, basename='activity')
+router.register(r'leaderboard', LeaderboardViewSet, basename='leaderboard')
+router.register(r'workouts', WorkoutViewSet, basename='workout')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

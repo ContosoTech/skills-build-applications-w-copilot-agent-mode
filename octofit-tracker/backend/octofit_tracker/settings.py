@@ -27,7 +27,7 @@ DEBUG = True
 
 import os
 
-# Allow localhost and codespace URL
+# Allow localhost and codespace URL for Codespaces and local dev
 codespace_name = os.environ.get('CODESPACE_NAME')
 allowed_hosts = ['localhost', '127.0.0.1']
 if codespace_name:
