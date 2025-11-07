@@ -17,13 +17,26 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, TeamViewSet, ActivityViewSet, LeaderboardViewSet, WorkoutViewSet, api_root
+from django.conf import settings
+from rest_framework.settings import api_settings
+from rest_framework.renderers import BrowsableAPIRenderer
+import os
 
-router = DefaultRouter()
-router.register(r'users', UserViewSet, basename='user')
-router.register(r'teams', TeamViewSet, basename='team')
-router.register(r'activities', ActivityViewSet, basename='activity')
-router.register(r'leaderboard', LeaderboardViewSet, basename='leaderboard')
-router.register(r'workouts', WorkoutViewSet, basename='workout')
+
+# Patch BrowsableAPIRenderer to use codespace URL if available
+class PatchedBrowsableAPIRenderer(BrowsableAPIRenderer):
+    def get_default_renderer_context(self):
+        context = super().get_default_renderer_context()
+        codespace_name = os.environ.get('CODESPACE_NAME')
+        if codespace_name:
+            context['request'].META['HTTP_HOST'] = f"{codespace_name}-8000.app.github.dev"
+            context['request'].scheme = 'https'
+        return context
+
+if BrowsableAPIRenderer in api_settings.DEFAULT_RENDERER_CLASSES:
+    idx = api_settings.DEFAULT_RENDERER_CLASSES.index(BrowsableAPIRenderer)
+    api_settings.DEFAULT_RENDERER_CLASSES = list(api_settings.DEFAULT_RENDERER_CLASSES)
+    api_settings.DEFAULT_RENDERER_CLASSES[idx] = PatchedBrowsableAPIRenderer
 
 urlpatterns = [
     path('admin/', admin.site.urls),
